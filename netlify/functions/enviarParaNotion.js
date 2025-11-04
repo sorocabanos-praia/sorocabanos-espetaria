@@ -2,7 +2,7 @@ export const handler = async (event) => {
   try {
     const { nome, telefone, endereco, itens, total } = JSON.parse(event.body);
 
-    // ⚙️ Variáveis de ambiente (configuradas no Netlify)
+    // ⚙️ Variáveis de ambiente
     const NOTION_API_KEY = process.env.NOTION_API_KEY;
     const DATABASE_ID = process.env.NOTION_DATABASE_ID;
 
@@ -29,7 +29,7 @@ export const handler = async (event) => {
             rich_text: [{ text: { content: itens } }] 
           },
           'Total': { 
-            number: parseFloat(total) 
+            rich_text: [{ text: { content: `R$ ${total}` } }] // ⚡ CORREÇÃO AQUI!
           },
           'Status': {
             select: { name: 'Novo Pedido' }
