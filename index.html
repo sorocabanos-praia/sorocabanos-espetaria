@@ -179,56 +179,58 @@
             }
         }
 
-        // Função para enviar pedido para o Notion via Netlify Function
-        async function sendOrderToNotion(name, phone, address) {
-            const mensagem = document.getElementById('mensagem') || createMessageElement();
+       // Função para enviar pedido para o Notion via Netlify Function
+async function sendOrderToNotion(name, phone, address) {
+    const mensagem = document.getElementById('mensagem') || createMessageElement();
+    
+    try {
+        // Formatar itens do pedido
+        const orderItems = Object.keys(cart).map(itemName => {
+            const item = cart[itemName];
+            return `${itemName} (${item.quantity}x) - R$ ${(item.price * item.quantity).toFixed(2)}`;
+        }).join('\n');
+
+        // Dados para enviar ao Notion (CORRIGIDO)
+        const orderData = {
+            nome: name,
+            telefone: phone,
+            endereco: address,
+            itens: orderItems,
+            total: cartTotal.toFixed(2) // Já formatado como string
+        };
+
+        console.log('Enviando para Netlify Function:', orderData);
+
+        // Enviar para Netlify Function (CORRIGIR URL)
+        const resposta = await fetch('/.netlify/functions/enviarParaNotion', { // ⚡ CORREÇÃO AQUI!
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json' 
+            },
+            body: JSON.stringify(orderData),
+        });
+
+        const data = await resposta.json();
+
+        if (resposta.ok) {
+            showMessage('✅ Pedido enviado com sucesso! Em breve entraremos em contato.', 'success');
             
-            try {
-                // Formatar itens do pedido
-                const orderItems = Object.keys(cart).map(itemName => {
-                    const item = cart[itemName];
-                    return `${itemName} (${item.quantity}x) - R$ ${(item.price * item.quantity).toFixed(2)}`;
-                }).join('\n');
-
-                // Dados para enviar ao Notion
-                const orderData = {
-                    nome: name,
-                    telefone: phone,
-                    endereco: address,
-                    itens: orderItems,
-                    total: cartTotal.toFixed(2)
-                };
-
-                // Enviar para Netlify Function
-                const resposta = await fetch('/.netlify/functions/enviarParaNotion', {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json' 
-                    },
-                    body: JSON.stringify(orderData),
-                });
-
-                const data = await resposta.json();
-
-                if (resposta.ok) {
-                    showMessage('✅ Pedido enviado com sucesso! Em breve entraremos em contato.', 'success');
-                    
-                    // Limpar carrinho e formulário
-                    cart = {};
-                    updateCartDisplay();
-                    customerModal.style.display = 'none';
-                    
-                    document.getElementById('customerName').value = '';
-                    document.getElementById('customerPhone').value = '';
-                    document.getElementById('customerAddress').value = '';
-                } else {
-                    throw new Error(data.error || 'Erro ao enviar pedido');
-                }
-            } catch (error) {
-                console.error('Erro:', error);
-                showMessage('❌ Erro ao enviar pedido. Tente novamente ou entre em contato diretamente.', 'error');
-            }
+            // Limpar carrinho e formulário
+            cart = {};
+            updateCartDisplay();
+            customerModal.style.display = 'none';
+            
+            document.getElementById('customerName').value = '';
+            document.getElementById('customerPhone').value = '';
+            document.getElementById('customerAddress').value = '';
+        } else {
+            throw new Error(data.error || 'Erro ao enviar pedido');
         }
+    } catch (error) {
+        console.error('Erro:', error);
+        showMessage('❌ Erro ao enviar pedido. Tente novamente ou entre em contato diretamente.', 'error');
+    }
+}
 
         function showMessage(text, type) {
             let messageElement = document.getElementById('mensagem');
